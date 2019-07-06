@@ -1,5 +1,4 @@
-# BackToNormal
-Comic-gardo downloader
+# Comic-gardo downloader
 
 "URL" - страница манги на comic-gardo. 
 "Bad" - папка для перепутанных изображений с сайта. 
