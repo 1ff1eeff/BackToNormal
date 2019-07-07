@@ -29,55 +29,14 @@ namespace BackToNormal
 
         List<string> outputs = new List<string>();
 
+        string BadDirectory = "";
+        string GoodDirectory = "";
+
+
         public MainWindow()
         {
             InitializeComponent();
-        }
-
-        /// <summary>
-        /// Загрузка
-        /// </summary>
-        /// 
-        private async void Start_Click(object sender, RoutedEventArgs e)
-        {
-
-            StartButton.IsEnabled = false;
-
-            try
-            {
-                cts = new CancellationTokenSource();
-                ResultsTextBox.Clear();
-                StopButton.Visibility = Visibility.Visible;
-                await AccessTheWebAsync(UrlTextBox.Text.ToString(), cts.Token);
-                ResultsTextBox.Text += "Загрузка завершена.";
-            }
-            catch (OperationCanceledException)
-            {
-                ResultsTextBox.Text += "Загрузка отменена.";
-            }
-            catch (Exception)
-            {
-                ResultsTextBox.Text += "Загрузка не удалась.";
-            }
-            finally
-            {
-                StartButton.IsEnabled = true;
-                StopButton.Visibility = Visibility.Hidden;
-            }
-
-        }
-
-        /// <summary>
-        /// Остановить загрузку
-        /// </summary>
-        /// 
-        private void Stop_Click(object sender, RoutedEventArgs e)
-        {
-            if (cts != null)
-            {
-                cts.Cancel();
-            }
-        }
+        }       
 
         /// <summary>
         /// Обработка
@@ -107,26 +66,25 @@ namespace BackToNormal
 
                 foreach (string image in files)
                 {
-                    Directory.CreateDirectory("tmp");
                     string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(image);
                     string fileName = Path.GetFileName(image);
                     ResultsTextBox.Text += "Обрабатывается: " + fileName + '\n';
-                    DirectoryInfo di = Directory.CreateDirectory("tmp\\" + fileNameWithoutExtension);
+                    DirectoryInfo di = Directory.CreateDirectory(SrcTextBox.Text + "Temp\\" + fileNameWithoutExtension);
 
-                    string outDirName = "";
-                    Regex regex = new Regex(@"[\\d]");
-                    Match match = regex.Match(OutTextBox.Text);
+                    string nameFromURL = "";
+                    Regex regex = new Regex(@"[\d]");
+                    Match match = regex.Match(UrlTextBox.Text);
                     while (match.Success)
                     {
-                        outDirName += match.Value;
+                        nameFromURL += match.Value;
                         match = match.NextMatch();
                     }
                     await SplitToImagesAsync(image, row, col, di.FullName, cts2.Token);
                     string[] stitchedImages = Directory.GetFiles(di.FullName);
+                    di = Directory.CreateDirectory(OutTextBox.Text + "\\" + nameFromURL);
                     Image combinedImage = await CombineAsync(stitchedImages, row, col, cts3.Token);
-                    Directory.CreateDirectory(OutTextBox.Text);
-                    combinedImage.Save(OutTextBox.Text + "\\" + fileName, System.Drawing.Imaging.ImageFormat.Png);
-                    combinedImage.Dispose();
+                    combinedImage.Save(di.FullName + "\\" + fileName, System.Drawing.Imaging.ImageFormat.Png);
+                    combinedImage.Dispose();                    
                 }
 
                 ResultsTextBox.Text += "\nИзображения обработаны.";
@@ -134,11 +92,11 @@ namespace BackToNormal
             }
             catch (OperationCanceledException)
             {
-                ResultsTextBox.Text += "Обработка отменена.";
+                ResultsTextBox.Text += "\nОбработка отменена.";
             }
             catch (Exception)
             {
-                ResultsTextBox.Text += "Обработка не удалась.";
+                ResultsTextBox.Text += "\nОбработка не удалась.";
             }
             finally
             {
@@ -155,10 +113,6 @@ namespace BackToNormal
                 cts2.Cancel();
             }
         }
-
-        
-
-
 
         async Task AccessTheWebAsync(string url, CancellationToken ct)
         {
@@ -360,11 +314,57 @@ namespace BackToNormal
             }
         }
 
+        /// <summary>
+        /// Загрузка
+        /// </summary>
+        /// 
+        private async void Start_Click(object sender, RoutedEventArgs e)
+        {
+
+            StartButton.IsEnabled = false;
+
+            try
+            {
+                cts = new CancellationTokenSource();
+                ResultsTextBox.Clear();
+                StopButton.Visibility = Visibility.Visible;
+                await AccessTheWebAsync(UrlTextBox.Text.ToString(), cts.Token);
+                ResultsTextBox.Text += "Загрузка завершена.";
+            }
+            catch (OperationCanceledException)
+            {
+                ResultsTextBox.Text += "Загрузка отменена.";
+            }
+            catch (Exception)
+            {
+                ResultsTextBox.Text += "Загрузка не удалась.";
+            }
+            finally
+            {
+                StartButton.IsEnabled = true;
+                StopButton.Visibility = Visibility.Hidden;
+            }
+
+        }
+
+        /// <summary>
+        /// Остановить загрузку
+        /// </summary>
+        /// 
+        private void Stop_Click(object sender, RoutedEventArgs e)
+        {
+            if (cts != null)
+            {
+                cts.Cancel();
+            }
+        }
+
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            SrcTextBox.Text = System.AppDomain.CurrentDomain.BaseDirectory + "Bad\\";
-            OutTextBox.Text = System.AppDomain.CurrentDomain.BaseDirectory + "Good\\";
-
+            BadDirectory = System.AppDomain.CurrentDomain.BaseDirectory + "Bad\\";
+            SrcTextBox.Text = BadDirectory;
+            GoodDirectory = System.AppDomain.CurrentDomain.BaseDirectory + "Good\\";
+            OutTextBox.Text = GoodDirectory;
         }
 
         
