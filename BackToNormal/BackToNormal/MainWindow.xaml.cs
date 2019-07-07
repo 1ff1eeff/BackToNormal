@@ -110,7 +110,7 @@ namespace BackToNormal
                     Directory.CreateDirectory("tmp");
                     string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(image);
                     string fileName = Path.GetFileName(image);
-                    //ResultsTextBox.Text += "Обрабатывается: " + fileName + '\n';
+                    ResultsTextBox.Text += "Обрабатывается: " + fileName + '\n';
                     DirectoryInfo di = Directory.CreateDirectory("tmp\\" + fileNameWithoutExtension);
 
                     string outDirName = "";
