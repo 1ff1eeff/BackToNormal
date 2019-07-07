@@ -68,9 +68,8 @@ namespace BackToNormal
                 {
                     string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(image);
                     string fileName = Path.GetFileName(image);
-                    ResultsTextBox.Text += "Обрабатывается: " + fileName + '\n';
+                    ResultsTextBox.AppendText("Обрабатывается: " + fileName + '\n');
                     DirectoryInfo di = Directory.CreateDirectory(SrcTextBox.Text + "Temp\\" + fileNameWithoutExtension);
-
                     string nameFromURL = "";
                     Regex regex = new Regex(@"[\d]");
                     Match match = regex.Match(UrlTextBox.Text);
@@ -81,22 +80,22 @@ namespace BackToNormal
                     }
                     await SplitToImagesAsync(image, row, col, di.FullName, cts2.Token);
                     string[] stitchedImages = Directory.GetFiles(di.FullName);
-                    di = Directory.CreateDirectory(OutTextBox.Text + "\\" + nameFromURL);
+                    DirectoryInfo di2 = Directory.CreateDirectory(OutTextBox.Text + "\\" + nameFromURL);
                     Image combinedImage = await CombineAsync(stitchedImages, row, col, cts3.Token);
-                    combinedImage.Save(di.FullName + "\\" + fileName, System.Drawing.Imaging.ImageFormat.Png);
+                    combinedImage.Save(di2.FullName + "\\" + fileName, System.Drawing.Imaging.ImageFormat.Png);
                     combinedImage.Dispose();                    
                 }
 
-                ResultsTextBox.Text += "\nИзображения обработаны.";
+                ResultsTextBox.AppendText("Изображения обработаны.\n");
 
             }
             catch (OperationCanceledException)
             {
-                ResultsTextBox.Text += "\nОбработка отменена.";
+                ResultsTextBox.AppendText("Обработка отменена.\n");
             }
             catch (Exception)
             {
-                ResultsTextBox.Text += "\nОбработка не удалась.";
+                ResultsTextBox.AppendText("Обработка не удалась.\n");
             }
             finally
             {
@@ -329,15 +328,15 @@ namespace BackToNormal
                 ResultsTextBox.Clear();
                 StopButton.Visibility = Visibility.Visible;
                 await AccessTheWebAsync(UrlTextBox.Text.ToString(), cts.Token);
-                ResultsTextBox.Text += "Загрузка завершена.";
+                ResultsTextBox.AppendText("Загрузка завершена.\n");
             }
             catch (OperationCanceledException)
             {
-                ResultsTextBox.Text += "Загрузка отменена.";
+                ResultsTextBox.AppendText("Загрузка отменена.\n");
             }
             catch (Exception)
             {
-                ResultsTextBox.Text += "Загрузка не удалась.";
+                ResultsTextBox.AppendText("Загрузка не удалась.\n");
             }
             finally
             {
@@ -367,6 +366,9 @@ namespace BackToNormal
             OutTextBox.Text = GoodDirectory;
         }
 
-        
+        private void ResultsTextBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+        {
+            ResultsTextBox.ScrollToEnd();
+        }
     }
 }
