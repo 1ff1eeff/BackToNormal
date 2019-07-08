@@ -5,7 +5,9 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:BackToNormal"
         mc:Ignorable="d"
-        Title="Comic-Gardo Downloader" Height="257.667" Width="679.667" Loaded="Window_Loaded" Topmost="True">
+        Title="Comic-Gardo Downloader" Height="320" Width="750" Loaded="Window_Loaded" Topmost="True"
+        WindowStartupLocation="CenterScreen">
+
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="143*"/>
@@ -18,10 +20,10 @@
         </Grid.ColumnDefinitions>
         <Button x:Name="StartButton" Content="Загрузить" Margin="0,14,0,0" VerticalAlignment="Top" Click="Start_Click" Grid.Column="1" HorizontalAlignment="Right" Width="86" Height="20"/>
         <TextBox x:Name="UrlTextBox" Margin="47,14,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Text="https://comic-gardo.com/episode/10834108156661711906" TextDecorations="{x:Null}" MaxHeight="36" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Auto" Padding="5,0,0,0" Height="20"/>
-        <TextBox x:Name="ResultsTextBox" Margin="14,96,13,10" TextWrapping="Wrap" AcceptsReturn="True" Text="&quot;URL&quot; - страница манги на comic-gardo. &quot;Bad&quot; - папка для перепутанных изображений с сайта. &quot;Good&quot; - папка для обработаных изображений. &quot;Загрузить&quot; - загрузить изображения с сайта в папку Bad. &quot;Обработать&quot; - восстановить порядок в изображениях и положить в папку Good. " ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Auto" Grid.ColumnSpan="3" Grid.RowSpan="2" TextChanged="ResultsTextBox_TextChanged"/>
-        <Button x:Name="StopButton" Content="Отмена" Margin="10,65,0,0" VerticalAlignment="Top" Click="Stop_Click"  Grid.Column="1" Height="20" Visibility="Hidden" />
+        <TextBox x:Name="ResultsTextBox" Margin="14,96,0,10" TextWrapping="Wrap" AcceptsReturn="True" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Auto" Grid.RowSpan="2" TextChanged="ResultsTextBox_TextChanged" Grid.ColumnSpan="2"/>
+
         <Button x:Name="CombineButton" Content="Обработать" Grid.Column="1" Margin="0,40,0,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="86" Height="20" Click="Combine_Click"/>
-        <Button x:Name="StopButton2" Content="Отмена" Grid.Column="1" HorizontalAlignment="Left" Margin="9,65,0,0" VerticalAlignment="Top" Width="86"  Height="20" Visibility="Hidden" Click="StopButton2_Click"/>
+
         <TextBox x:Name="SrcTextBox" Height="20" Margin="47,40,0,0" TextWrapping="Wrap" VerticalAlignment="Top" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Auto" Padding="5,0,0,0" HorizontalScrollBarVisibility="Visible" SnapsToDevicePixels="True"/>
         <Label Content=" URL:" HorizontalAlignment="Left" Margin="10,14,0,0" VerticalAlignment="Top" Height="20" RenderTransformOrigin="1.176,0.625" Width="32" Padding="0" VerticalContentAlignment="Center"/>
         <Label Content=" Bad:" HorizontalAlignment="Left" Margin="10,40,0,0" VerticalAlignment="Top" RenderTransformOrigin="1.176,0.625" Height="20" Width="32" Padding="0" VerticalContentAlignment="Center"/>
@@ -29,5 +31,9 @@
         <TextBox x:Name="OutTextBox" Height="20" Margin="47,65,0,0" TextWrapping="Wrap" VerticalAlignment="Top" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Auto" Padding="5,0,0,0" HorizontalScrollBarVisibility="Visible" SnapsToDevicePixels="True"/>
         <Label Content="Good:" HorizontalAlignment="Left" Margin="10,65,0,0" VerticalAlignment="Top" RenderTransformOrigin="1.176,0.625" Height="20" Width="32" Padding="0" VerticalContentAlignment="Center"/>
         <Button Content="..." HorizontalAlignment="Right" Margin="0,65,0,0" VerticalAlignment="Top" Width="28" Height="20" FontWeight="Bold" Click="Button_Click_2"/>
+        <Button x:Name="PurgeButton" Content="Purge" Grid.Column="1" HorizontalAlignment="Left" Margin="9,65,0,0" VerticalAlignment="Top" Width="86" Visibility="Hidden" Click="Purge_Click"/>
+        <Button x:Name="StopButton" Content="Отмена" Margin="0,65,0,0" VerticalAlignment="Top" Click="Stop_Click"  Grid.Column="1" Height="20" HorizontalAlignment="Right" Width="86"  Visibility="Hidden" />
+        <Button x:Name="StopButton2" Content="Отмена" Grid.Column="1" HorizontalAlignment="Left" Margin="9,65,0,0" VerticalAlignment="Top" Width="86"  Height="20" Visibility="Hidden" Click="StopButton2_Click"/>
+
     </Grid>
 </Window>

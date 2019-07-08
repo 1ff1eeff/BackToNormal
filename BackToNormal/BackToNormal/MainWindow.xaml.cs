@@ -26,8 +26,7 @@ namespace BackToNormal
         CancellationTokenSource cts;
         CancellationTokenSource cts2;
         CancellationTokenSource cts3;
-
-        List<string> outputs = new List<string>();
+        readonly List<string> outputs = new List<string>();
 
         string BadDirectory = "";
         string GoodDirectory = "";
@@ -45,64 +44,77 @@ namespace BackToNormal
         private async void Combine_Click(object sender, RoutedEventArgs e)
         {
 
-            CombineButton.IsEnabled = false;
-
-            try
+            if (new DirectoryInfo(BadDirectory).Exists)
             {
-                cts2 = new CancellationTokenSource();
-                StopButton2.Visibility = Visibility.Visible;
 
-                cts3 = new CancellationTokenSource();
+                CombineButton.IsEnabled = false;
 
-
-                int row = 4;
-                int col = 4;
-
-                string[] files = { "" };
-                if (SrcTextBox.Text != "")
+                try
                 {
-                    files = Directory.GetFiles(SrcTextBox.Text);
-                }
+                    cts2 = new CancellationTokenSource();
+                    StopButton2.Visibility = Visibility.Visible;
 
-                foreach (string image in files)
-                {
-                    string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(image);
-                    string fileName = Path.GetFileName(image);
-                    ResultsTextBox.AppendText("Обрабатывается: " + fileName + '\n');
-                    DirectoryInfo di = Directory.CreateDirectory(SrcTextBox.Text + "Temp\\" + fileNameWithoutExtension);
-                    string nameFromURL = "";
-                    Regex regex = new Regex(@"[\d]");
-                    Match match = regex.Match(UrlTextBox.Text);
-                    while (match.Success)
+                    cts3 = new CancellationTokenSource();
+
+
+                    int row = 4;
+                    int col = 4;
+
+                    string[] files = { "" };
+                    if (SrcTextBox.Text != "")
                     {
-                        nameFromURL += match.Value;
-                        match = match.NextMatch();
+                        files = Directory.GetFiles(SrcTextBox.Text);
                     }
-                    await SplitToImagesAsync(image, row, col, di.FullName, cts2.Token);
-                    string[] stitchedImages = Directory.GetFiles(di.FullName);
-                    DirectoryInfo di2 = Directory.CreateDirectory(OutTextBox.Text + "\\" + nameFromURL);
-                    Image combinedImage = await CombineAsync(stitchedImages, row, col, cts3.Token);
-                    combinedImage.Save(di2.FullName + "\\" + fileName, System.Drawing.Imaging.ImageFormat.Png);
-                    combinedImage.Dispose();                    
+
+                    foreach (string image in files)
+                    {
+                        string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(image);
+                        string fileName = Path.GetFileName(image);
+                        ResultsTextBox.AppendText("Обрабатывается: " + fileName + '\n');
+                        DirectoryInfo di = Directory.CreateDirectory(SrcTextBox.Text + "Temp\\" + fileNameWithoutExtension);
+                        string nameFromURL = "";
+                        Regex regex = new Regex(@"[\d]");
+                        Match match = regex.Match(UrlTextBox.Text);
+                        while (match.Success)
+                        {
+                            nameFromURL += match.Value;
+                            match = match.NextMatch();
+                        }
+                        await SplitToImagesAsync(image, row, col, di.FullName, cts2.Token);
+                        string[] stitchedImages = Directory.GetFiles(di.FullName);
+                        DirectoryInfo di2 = Directory.CreateDirectory(OutTextBox.Text + "\\" + nameFromURL);
+                        Image combinedImage = await CombineAsync(stitchedImages, row, col, cts3.Token);
+                        combinedImage.Save(di2.FullName + "\\" + fileName, System.Drawing.Imaging.ImageFormat.Png);
+                        combinedImage.Dispose();
+
+                        //Purge(di);
+                    }
+                    ResultsTextBox.AppendText("Изображения обработаны.\n");
+
+                    //DirectoryInfo bad = new DirectoryInfo(BadDirectory);
+                    //while (bad.Exists)
+                    //{
+                    //    Thread.Sleep(100);
+                    //    ResultsTextBox.AppendText("Папка \"" + bad.Name + "\" используется. Пожалуйста подождите ещё.\n");
+                    //    Purge(bad);
+                    //}
                 }
-
-                ResultsTextBox.AppendText("Изображения обработаны.\n");
-
+                catch (OperationCanceledException)
+                {
+                    ResultsTextBox.AppendText("Обработка отменена.\n");
+                }
+                catch (Exception)
+                {
+                    ResultsTextBox.AppendText("Обработка не удалась.\n");
+                }
+                finally
+                {
+                    CombineButton.IsEnabled = true;
+                    StopButton2.Visibility = Visibility.Hidden;
+                }
             }
-            catch (OperationCanceledException)
-            {
-                ResultsTextBox.AppendText("Обработка отменена.\n");
-            }
-            catch (Exception)
-            {
-                ResultsTextBox.AppendText("Обработка не удалась.\n");
-            }
-            finally
-            {
-                CombineButton.IsEnabled = true;
-                StopButton2.Visibility = Visibility.Hidden;
-            }
-            
+            else
+                ResultsTextBox.AppendText("Директория: \"" + BadDirectory + "\" не найдена.\n");
         }
 
         private void StopButton2_Click(object sender, RoutedEventArgs e)
@@ -113,12 +125,18 @@ namespace BackToNormal
             }
         }
 
+        
+
         async Task AccessTheWebAsync(string url, CancellationToken ct)
         {
             HttpClient client = new HttpClient();
             HttpResponseMessage response = await client.GetAsync(url, 0, ct);
             string output = await response.Content.ReadAsStringAsync();
             string output2 = "", output3 = "", output4 = "", output5 = "";
+
+            if (new DirectoryInfo(BadDirectory).Exists) {
+                Purge(new DirectoryInfo(BadDirectory));
+            }
 
             //В теге <img> с классами "page-image js-page-image hidden"
             Regex regex1 = new Regex(@"<img\n\s\s\s\sclass=""page-image\sjs-page-image\shidden""[^>]+>");
@@ -160,18 +178,17 @@ namespace BackToNormal
                 if (word != "")
                     outputs.Add(word);
             }
-            ResultsTextBox.Text += output5;
-
-
+            ResultsTextBox.AppendText(output5);
+            
             int i = 0;
             foreach (string imageSrc in outputs)
             {
                 WebClient webClient = new WebClient();
-                DirectoryInfo di = Directory.CreateDirectory(SrcTextBox.Text);
-                webClient.DownloadFileAsync(new Uri(imageSrc), SrcTextBox.Text + "IMG-" + i++.ToString() + ".png");
-               
-            }
+                DirectoryInfo bad = Directory.CreateDirectory(SrcTextBox.Text);
+                webClient.DownloadFileAsync(new Uri(imageSrc), SrcTextBox.Text + "IMG-" + i++.ToString() + ".png");                               
+            }            
             i = 0;
+            outputs.Clear();
 
         }
 
@@ -181,15 +198,15 @@ namespace BackToNormal
         {
             return await Task.Run(() => Combine(files, row, col, token));
         }
-        public static Image Combine(string[] files, int row, int col, CancellationToken token)
-        {
+        private static Image Combine(string[] files, int row, int col, CancellationToken token)
+        {            
             Image img = null;
             try
             {
                 System.Drawing.Bitmap bitmap = new System.Drawing.Bitmap(files[0]);
-                int width = bitmap.Width * row;
-                int height = bitmap.Height * col;
-                img = new Bitmap(width, height);       
+                int width = bitmap.Width * row; //280 px
+                int height = bitmap.Height * col; //400 px
+                img = new Bitmap(width, height);
 
                 using (System.Drawing.Graphics g = System.Drawing.Graphics.FromImage(img))
                 {
@@ -210,12 +227,7 @@ namespace BackToNormal
                     for (int i = 0; i < col; i++)
                     {
                         for (int j = 0; j < row; j++)
-                        {
-                            if (token.IsCancellationRequested)
-                            {
-                                img.Dispose();
-                                return img;
-                            }
+                        {                            
                             g.DrawImage(Image.FromFile(files[curr]), new Point(offsetX, offsetY));
                             offsetX += bitmap.Width;
                             curr++;
@@ -223,6 +235,11 @@ namespace BackToNormal
                         offsetX = 0;
                         offsetY += bitmap.Height;
                     }
+                    if (token.IsCancellationRequested)
+                    {
+                        return img;
+                    }
+                    
                     bitmap.Dispose();
                     g.Dispose();
                 }
@@ -261,7 +278,7 @@ namespace BackToNormal
                 for (int j = 0; j < row; j++)
                 {
                     if (token.IsCancellationRequested)
-                    {                        
+                    {
                         return;
                     }
 
@@ -325,10 +342,11 @@ namespace BackToNormal
             try
             {
                 cts = new CancellationTokenSource();
-                ResultsTextBox.Clear();
                 StopButton.Visibility = Visibility.Visible;
                 await AccessTheWebAsync(UrlTextBox.Text.ToString(), cts.Token);
                 ResultsTextBox.AppendText("Загрузка завершена.\n");
+                if (new DirectoryInfo(BadDirectory).Exists)
+                    PurgeButton.Visibility = Visibility.Visible;
             }
             catch (OperationCanceledException)
             {
@@ -360,15 +378,114 @@ namespace BackToNormal
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
+            ResultsTextBox.AppendText(
+                "\"URL\" - страница манги на comic-gardo. \n" +
+                "\"Bad\" - папка для перепутанных изображений с сайта. \n" +
+                "\"Good\" - папка для обработаных изображений. \n" +
+                "\"Загрузить\" - загрузить изображения с сайта в папку Bad. \n" +
+                "\"Обработать\" - восстановить порядок в изображениях и положить в папку Good.\n" +
+                "\"Purge\" (временная) - удалить папку \"Bad\". Может потребовать подождать некоторое время.\n" +
+                "===============================================================\n"
+
+                );
             BadDirectory = System.AppDomain.CurrentDomain.BaseDirectory + "Bad\\";
             SrcTextBox.Text = BadDirectory;
             GoodDirectory = System.AppDomain.CurrentDomain.BaseDirectory + "Good\\";
             OutTextBox.Text = GoodDirectory;
+            if(new DirectoryInfo(BadDirectory).Exists)
+                PurgeButton.Visibility = Visibility.Visible;
         }
 
         private void ResultsTextBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
         {
             ResultsTextBox.ScrollToEnd();
         }
+
+        private void Purge(DirectoryInfo di)
+        { 
+            try
+            {
+                Directory.Delete(di.FullName,true);
+                //Directory.Delete(@"C:\Users\Пользователь\source\repos\BackToNormal\BackToNormal\bin\Debug\Bad\Temp", true);
+                //ResultsTextBox.AppendText("Папка Bad - удалена.\n");
+
+                //foreach (FileInfo file in di.EnumerateFiles())
+                //{
+                //    //if (WaitForFile(file.FullName))
+                //        file.Delete();
+                //}
+                //foreach (DirectoryInfo dir in di.EnumerateDirectories())
+                //{
+                //    dir.Delete(true);
+                //}
+                ResultsTextBox.AppendText("Папка \"" + di.Name + "\" из каталога " + di.Parent.FullName + " успешно удалена!\n");
+                PurgeButton.Visibility = Visibility.Hidden;
+            }
+            catch (Exception ex)
+            {
+                if (di.Exists)
+                    ResultsTextBox.AppendText("Папка \"" + di.Name + "\" используется. Пожалуйста подождите ещё.\n");
+                else
+                    ResultsTextBox.AppendText("Папка \"" + di.Name + "\" не найдена в каталоге " + di.Parent.FullName + "\n");
+                //ResultsTextBox.AppendText(ex.Message + "\n");
+            }
+            finally
+            {
+                
+            }
+        }
+
+        
+        /// <summary>
+        /// Blocks until the file is not locked any more.
+        /// </summary>
+        public bool WaitForFile(string fullPath)
+        {
+            int numTries = 0;
+            while (true)
+            {
+                ++numTries;
+                try
+                {
+                    // Attempt to open the file exclusively.
+                    using (FileStream fs = new FileStream(fullPath,
+                        FileMode.Open, FileAccess.ReadWrite,
+                        FileShare.None, 100))
+                    {
+                        fs.ReadByte();
+
+                        // If we got this far the file is ready
+                        break;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    ResultsTextBox.AppendText(
+                        "WaitForFile " + fullPath + " failed to get an exclusive lock: " + ex.ToString()
+                        );
+
+                    if (numTries > 10)
+                    {
+                        ResultsTextBox.AppendText(
+                            "WaitForFile " + fullPath + " giving up after 10 tries"
+                            );
+                        return false;
+                    }
+
+                    // Wait for the lock to be released
+                    System.Threading.Thread.Sleep(500);
+                }
+            }
+
+            ResultsTextBox.AppendText("WaitForFile " + fullPath + " returning true after " + numTries + " tries"
+                );
+            return true;
+        }
+
+        private void Purge_Click(object sender, RoutedEventArgs e)
+        {
+            Purge(new DirectoryInfo(BadDirectory));
+        }
+
     }
 }
